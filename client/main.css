@@ -1,0 +1,42 @@
+/* CSS declarations go here */
+
+table {
+    width: 100%;
+    white-space: nowrap;
+}
+
+td {
+    border: 1px solid;
+    vertical-align: top;
+}
+
+td:last-child {
+    vertical-align: top;
+    width: 100%;
+}
+
+th {
+    vertical-align: top;
+}
+
+.simple-div {
+    background-color: black;
+    min-height: 175px;
+}
+
+.element-panel {
+    overflow-y: auto;
+    max-width: 300px;
+    float: right;
+}
+
+.control-panel {
+    overflow-y: auto;
+    max-height: 175px;
+    min-width: 300px;
+}
+
+.control-container {
+    max-height: 200px;
+    margin: 5px;
+}
