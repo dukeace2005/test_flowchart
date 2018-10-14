@@ -11,6 +11,7 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import Engine from 'json-rules-engine-simplified';
 import SampleWorflow from '../../client/sample.json';
 import SampleWorflow2 from '../../client/sample2.json';
+import { connect } from 'react-redux';
 
 export default class GraphEditor extends Component {
     
@@ -79,6 +80,7 @@ export default class GraphEditor extends Component {
     executeEngine(cell) {
         try {
             var desc = cell.prop('desc');//Contains ports with their values
+            desc.completed = true;
             var guts = cell.prop('guts');//Contains inner params
             //console.log(guts);
             var outboundLinks = this.props.graph.getConnectedLinks(cell, { outbound: true })
@@ -94,7 +96,7 @@ export default class GraphEditor extends Component {
                         });
                     return false;
                 }    
-                var link = outboundLinks[0];
+                outboundLinks.map(link => {
                     var source_value = desc.ports[link.attributes.source.port].value;
                     var target = link.attributes.target;
                     var engines = this.props.graph.getElements().filter(elem => {
@@ -105,13 +107,13 @@ export default class GraphEditor extends Component {
                     var new_desc = engine.prop("desc");
                     new_desc.ports[target.port].value = parseFloat(source_value);
                     engine.prop('desc', new_desc);
-                    break;
+                })
+                break;
                 case 'exeSum':
                     desc.ports['out'].value = desc.ports['A'].value + desc.ports['B'].value;
                     cell.prop('desc', desc);
                     //Now transfer result to next node if any
-                    if(outboundLinks.length > 0) {
-                        var link = outboundLinks[0];
+                    outboundLinks.map(link => {
                         var target = link.attributes.target;
                         var engines = this.props.graph.getElements().filter(elem => {
                             return elem.id == target.id;
@@ -121,13 +123,13 @@ export default class GraphEditor extends Component {
                         var new_desc = engine.prop("desc");
                         new_desc.ports[target.port].value = parseFloat(desc.ports['out'].value);
                         engine.prop('desc', new_desc);
-                    }
+                    })
                     break;
                 case 'exeSub':
                     desc.ports['out'].value = desc.ports['A'].value - desc.ports['B'].value;
                     cell.prop('desc', desc);
                     //Now transfer result to next node if any
-                    if(outboundLinks.length > 0) {
+                    outboundLinks.map(link => {
                         var link = outboundLinks[0];
                         var target = link.attributes.target;
                         var engines = this.props.graph.getElements().filter(elem => {
@@ -138,7 +140,7 @@ export default class GraphEditor extends Component {
                         var new_desc = engine.prop("desc");
                         new_desc.ports[target.port].value = parseFloat(desc.ports['out'].value);
                         engine.prop('desc', new_desc);
-                    }
+                    })
                 break;
                 case 'exeDiv':
                     if(desc.ports['B'].value == 0) {//Port is not ready
@@ -147,24 +149,24 @@ export default class GraphEditor extends Component {
                     desc.ports['out'].value = desc.ports['A'].value / desc.ports['B'].value;
                     cell.prop('desc', desc);
                     //Now transfer result to next node if any
-                    if(outboundLinks.length > 0) {
+                    outboundLinks.map(link => {
                         var link = outboundLinks[0];
                         var target = link.attributes.target;
                         var engines = this.props.graph.getElements().filter(elem => {
                             return elem.id == target.id;
                         });
-                        var engine = engines[0];
+                       var engine = engines[0];
                         //This is the targeted engine, now move data to corresponded port and try to execute if all ports have data
                         var new_desc = engine.prop("desc");
                         new_desc.ports[target.port].value = parseFloat(desc.ports['out'].value);
                         engine.prop('desc', new_desc);
-                    }
+                    })
                 break;
                 case 'exeMult':
                     desc.ports['out'].value = desc.ports['A'].value * desc.ports['B'].value;
                     cell.prop('desc', desc);
                     //Now transfer result to next node if any
-                    if(outboundLinks.length > 0) {
+                    outboundLinks.map(link => {
                         var link = outboundLinks[0];
                         var target = link.attributes.target;
                         var engines = this.props.graph.getElements().filter(elem => {
@@ -175,7 +177,7 @@ export default class GraphEditor extends Component {
                         var new_desc = engine.prop("desc");
                         new_desc.ports[target.port].value = parseFloat(desc.ports['out'].value);
                         engine.prop('desc', new_desc);
-                    }
+                    })
                 break;
                 case 'conditional':
                     var valA = desc.ports['in 0'].value;
@@ -244,7 +246,7 @@ export default class GraphEditor extends Component {
                             }
                         break;
                     }
-            }
+                }
             return true;
         }
         catch(e) {
@@ -304,6 +306,8 @@ export default class GraphEditor extends Component {
                     last_cell.attr('rect/fill', 'red');
                 }   
             }    
+        //Signal back for changes in the graph
+        this.props.callback();
         }
     }
 
@@ -352,3 +356,4 @@ export default class GraphEditor extends Component {
         )
     }
 }
+

@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
 
-export const Cells = new Mongo.Collection('cells');
+/*export const Cells = new Mongo.Collection('cells');
 
 if (Meteor.isServer) {
   Meteor.publish('cells', function graphPublication() {
@@ -22,3 +22,4 @@ Meteor.methods({
     Cells.update(cell._id, cell);
   }
 });
+*/

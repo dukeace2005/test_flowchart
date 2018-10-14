@@ -10,6 +10,8 @@ import { Cells } from '../api/cells.js';
 import joint, { util } from 'jointjs'
 import { Position, Toaster, Intent } from "@blueprintjs/core";
 import "@blueprintjs/core/lib/css/blueprint.css";
+import { connect } from 'react-redux';
+import { addOutput, cleanOutputs } from '../redux/actions';
 
 const template = {
   "_id": util.uuid(),
@@ -18,6 +20,8 @@ const template = {
   "units": [
   ]
 }
+
+//const store = createStore(recorder);
 
 // App component - represents the whole app
 class App extends Component {
@@ -55,9 +59,8 @@ class App extends Component {
   //Register keyboard listener
   componentDidMount() {
     document.addEventListener("keydown", this.onKeyPressed, false);
-    
-    let self = this;
 
+    let self = this;
     //Create view for graph editor
     this.paper = new joint.dia.Paper({
       el: self.arena,
@@ -92,6 +95,8 @@ class App extends Component {
       refresh: !self.state.refresh
       });
     });
+
+    
   }
 
   //Key pressed, check for Delete
@@ -103,6 +108,28 @@ class App extends Component {
 
   //onGraphRefresh - refresh JSON viewer for the entire workflow
   onGraphRefresh() {
+    this.props.cleanOutputs();
+    var cells = this.graph.getCells();
+    var value = 'N/A';
+    cells.map(cell => {
+      var desc = cell.prop('desc');//Contains ports with their values
+      var guts = cell.prop('guts');//Contains ports with their values
+      if(guts == null)
+        return;
+      if(guts.type == 'conditional') {
+        value = desc.ports['yes'].value;
+      }
+      else {
+        value = desc.ports['out'].value;
+      }
+
+      this.props.addOutput({
+        id: cell.id,
+        value: value,
+        completed: desc.completed || false
+    });
+  });
+
     this.setState({
       refresh: !this.state.refresh
     });
@@ -128,7 +155,7 @@ class App extends Component {
       if(guts.type != "conditional") 
         return;
       var updated_desc = this.state.selCell.prop('desc');
-      updated_desc.value = edit.value;
+      updated_desc.value = edit;
       this.state.selCell.prop('desc', updated_desc);
       var label = 'Cond.';
       switch(updated_desc.value) {
@@ -204,23 +231,33 @@ class App extends Component {
 
   render() {
     let desc = {};
-    if(this.state.selCell)
+    let guts = {};
+    if(this.state.selCell) {
       desc = this.state.selCell.prop('desc');
+      guts = this.state.selCell.prop('guts');
+    }
+
     let top_display = (
       <tr> 
         <td>
-          <GraphEditor graph={this.graph} callback={this.onGraphRefresh}/>
+          <GraphEditor graph={this.graph} callback={this.onGraphRefresh} store={this.props}/>
         </td>
         <td>
           <div className='control-panel'>
-            <JsonViewer json={desc} name='Unit' theme='isotope' editCallback={this.onEditUnit} selectCallback={this.onSelectOption}/>
+                    <JsonViewer json={desc} name='Unit' theme='isotope' editCallback={this.onEditUnit} 
+                      selectCallback={this.onSelectOption}/>
           </div>
-          </td>
-          <td>
+        </td>
+        <td>
           <div className='control-panel'>
             <JsonViewer json={this.graph.toJSON()} name='Workflow' theme="isotope" editCallback={this.onEditWorkflow} selectCallback={this.onSelectWorflow}/>
           </div>
         </td>
+        <td>
+            <div className='control-panel'>
+              <JsonViewer json={JSON.parse(JSON.stringify(this.props.outputs))} name='Outputs' theme="isotope"/>
+            </div>
+          </td>
       </tr> 
     );
     let bottom_display = (
@@ -237,13 +274,32 @@ class App extends Component {
   }
 }
 
-export default withTracker(() => {
-  const cellsSubscribeTracker = Meteor.subscribe('cells');
-  const dbCellsIsLoaded = cellsSubscribeTracker.ready();
-  const dbCells = Cells.find({}).fetch();
+const mapDispatchToProps = (dispatch) => {
+  return {
+    addOutput : (output) => dispatch(addOutput(output)),
+    cleanOutputs : () => dispatch(cleanOutputs()),
+  }
+};
+
+const mapStateToProps = (state) => {
+  return {
+      outputs: state.outputs,
+      state: state
+  }
+};
+
+/*export default withTracker(() => {
+  //const cellsSubscribeTracker = Meteor.subscribe('cells');
+  //const dbCellsIsLoaded = cellsSubscribeTracker.ready();
+  //const dbCells = Cells.find({}).fetch();
 
   return {
-    dbCells,
-    dbCellsIsLoaded
+    //dbCells,
+    //dbCellsIsLoaded
   };
 })(App);
+*/
+export default connect(  
+  mapStateToProps,
+  mapDispatchToProps
+)(App);

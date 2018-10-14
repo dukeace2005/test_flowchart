@@ -159,6 +159,7 @@ export default class Shapes {
 
     var editable = {
         "label": 'Input',
+        "desc": '',
         "ports": {
             "out": {
                 "value": 0
