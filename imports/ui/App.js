@@ -11,7 +11,7 @@ import joint, { util } from 'jointjs'
 import { Position, Toaster, Intent } from "@blueprintjs/core";
 import "@blueprintjs/core/lib/css/blueprint.css";
 import { connect } from 'react-redux';
-import { addOutput, cleanOutputs } from '../redux/actions';
+import { addOutput, addUnit, removeUnit, cleanOutputs } from '../redux/actions';
 
 const template = {
   "_id": util.uuid(),
@@ -128,11 +128,29 @@ class App extends Component {
         value: value,
         completed: desc.completed || false
     });
+    if(guts.type == 'input') {
+      var promisses = [];
+      this.graph.bfs(cell, (child) => {
+        promisses.push(this.addUnits(child));
+      }, {outbound: true});
+    Promise.all(promisses).then();
+    }
   });
 
-    this.setState({
-      refresh: !this.state.refresh
-    });
+  this.setState({
+    refresh: !this.state.refresh
+  });
+}
+
+  //addUnits
+  addUnits(child) {
+    return new Promise((resolve, reject) => {
+        //Add to execution tree
+        this.props.addUnit({
+          id: child.id,
+      });
+      resolve();
+    })
   }
 
   //Callback from JSON Viewer for Unit configuration
@@ -277,14 +295,17 @@ class App extends Component {
 const mapDispatchToProps = (dispatch) => {
   return {
     addOutput : (output) => dispatch(addOutput(output)),
+    addUnit : (unit) => dispatch(addUnit(unit)),
+    removeUnit : (id) => dispatch(removeUnit(id)),
     cleanOutputs : () => dispatch(cleanOutputs()),
   }
 };
 
 const mapStateToProps = (state) => {
   return {
-      outputs: state.outputs,
-      state: state
+    units: state.units,
+    outputs: state.outputs,
+    state: state
   }
 };
 

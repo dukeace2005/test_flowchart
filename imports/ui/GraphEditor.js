@@ -11,7 +11,6 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import Engine from 'json-rules-engine-simplified';
 import SampleWorflow from '../../client/sample.json';
 import SampleWorflow2 from '../../client/sample2.json';
-import { connect } from 'react-redux';
 
 export default class GraphEditor extends Component {
     
@@ -22,6 +21,7 @@ export default class GraphEditor extends Component {
         this.handleAddInput = this.handleAddInput.bind(this);
         this.addToCellToGraph = this.addToCellToGraph.bind(this);
         this.runWorkflow = this.runWorkflow.bind(this);
+        this.runWorkflowStep = this.runWorkflowStep.bind(this);
         this.handleSampleWorkflow = this.handleSampleWorkflow.bind(this);
         this.handleSaveWorkflow = this.handleSaveWorkflow.bind(this);
         this.handleLoadWorkflow = this.handleLoadWorkflow.bind(this);
@@ -263,7 +263,7 @@ export default class GraphEditor extends Component {
 
     //runWorkflow
     runWorkflow() {
-        let gr = JSON.stringify(this.props.graph.toJSON());
+        //let gr = JSON.stringify(this.props.graph.toJSON());
         let inputs = this.props.graph.getElements().filter(elem => {
             var guts = elem.prop('guts');
             return guts.type == 'input';
@@ -311,6 +311,26 @@ export default class GraphEditor extends Component {
         }
     }
 
+    //runWorkflowStep
+    runWorkflowStep() {
+        let id = this.props.store.units[0];
+        let cell = this.props.graph.getCell(id);
+        this.executeEngine(cell);
+        var guts = cell.prop('guts');
+        var ports = cell.prop('desc').ports;
+        this.props.store.removeUnit(id);
+        if(guts.type != 'conditional') {
+            var value = 'Step out: ' + ports['out'].value;
+            Toaster.create({
+                position: Position.BOTTOM,
+              }).show({
+                intent: Intent.SUCCESS,
+                timeout: 1000,
+                message: value
+            });
+        }    
+    }
+
     renderButton(text, iconName, disabled, menu) {
             return (
             <Popover content={menu} position={Position.LEFT_TOP}>
@@ -344,6 +364,7 @@ export default class GraphEditor extends Component {
                 {this.renderButton("Workflows", "database", false, WorkflowMenu)}
                 {this.renderButton("Units", "database", false, FileMenu)}
                 <Button onClick={() => this.runWorkflow()} icon="circle-arrow-right">Run</Button>
+                <Button disabled={this.props.graph.getCells().length == 0} onClick={() => this.runWorkflowStep()} icon="flows">Step</Button>
             </ButtonGroup>
         )
     }
@@ -356,4 +377,3 @@ export default class GraphEditor extends Component {
         )
     }
 }
-

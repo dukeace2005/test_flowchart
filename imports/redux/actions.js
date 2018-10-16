@@ -15,14 +15,17 @@ export const addOutput = (output) => {
     }
   }
 
-  export const markComplete = (completed) => {
+  export const addUnit = (unit) => {
     return {
-        type: 'MARK_COMPLETE',
-        output: {
-            id: 1,
-            value: 0,
-            completed: completed
-        }
+        type: 'ADD_UNIT',
+        unit: unit
+    }      
+  }
+
+  export const removeUnit = (id) => {
+    return {
+        type: 'REMOVE_UNIT',
+        unit: id,
     }      
   }
 
