@@ -1,9 +1,8 @@
-# JointJS + React + Meteor
-This small project with JointJS, React and Meteor.
+# JointJS + React + Meteor + Redux
+This small project with JointJS, React, Redux and Meteor.
 
 ## Reactivity
 In this demo no DB is used. 
-
 
 ## Getting startet
 Install the packages
